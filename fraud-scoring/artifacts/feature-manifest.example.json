@@ -1,0 +1,16 @@
+{
+  "modelVersion": "replace-with-training-run-version",
+  "featureSchemaVersion": "replace-with-training-schema-version",
+  "featureNames": [
+    "amount",
+    "prior_transaction_count",
+    "prior_amount_total",
+    "layer1_suspicious"
+  ],
+  "features": [
+    {"name": "amount", "type": "float32", "source": "amount", "transform": "identity"},
+    {"name": "prior_transaction_count", "type": "float32", "source": "priorTransactionCount", "transform": "identity"},
+    {"name": "prior_amount_total", "type": "float32", "source": "priorAmountTotal", "transform": "identity"},
+    {"name": "layer1_suspicious", "type": "float32", "source": "suspicious", "transform": "identity"}
+  ]
+}

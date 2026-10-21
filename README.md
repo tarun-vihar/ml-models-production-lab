@@ -7,6 +7,7 @@ Parent repository for production focused machine learning projects. Each project
 | Module | Purpose | Documentation |
 | --- | --- | --- |
 | `fraud-detection/` | Spring Boot service that ingests transaction events, enriches them, applies rules, and publishes results through Kafka | [Fraud Detection README](fraud-detection/README.md) |
+| `fraud-scoring/` | Python service that scores enriched events and publishes model results to Kafka | [Fraud Scoring README](fraud-scoring/README.md) |
 
 ## Build the lab
 
@@ -37,6 +38,8 @@ docker compose ps
 Check readiness at <http://localhost:8080/actuator/health/readiness>. Follow logs with `docker compose logs -f app`. Stop the stack with `docker compose down`.
 
 For manual event submission, database checks, IDE debugging notes, architecture, and current implementation limits, see the [fraud detection guide](fraud-detection/README.md).
+
+The fraud scoring service consumes `enriched-transactions` and publishes to `scored-transactions`. Local Compose uses an explicitly labeled development-only scoring baseline until a versioned trained model and its feature manifest are provided. See the [Fraud Scoring guide](fraud-scoring/README.md) for contracts and verification commands.
 
 ## Adding another project
 
