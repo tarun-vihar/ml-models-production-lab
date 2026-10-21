@@ -1,2 +1,43 @@
-# ml-models-production-lab
-Fraud detection, liquidity forecasting, training pipelines, model serving, AWS deployment, and monitoring.
+# ML Models Production Lab
+
+Parent repository for production focused machine learning projects. Each project is kept as an independent application module, with its own source, dependencies, and run documentation.
+
+## Projects
+
+| Module | Purpose | Documentation |
+| --- | --- | --- |
+| `fraud-detection/` | Spring Boot service that ingests transaction events, enriches them, applies rules, and publishes results through Kafka | [Fraud Detection README](fraud-detection/README.md) |
+
+## Build the lab
+
+The root Maven project is an aggregator. It builds all modules:
+
+```sh
+mvn package
+```
+
+Build or test only fraud detection (from the repository root):
+
+```sh
+mvn -pl fraud-detection -am package -DskipTests
+mvn -pl fraud-detection -am test
+```
+
+`-am` also builds required modules. The artifact keeps its application name, `fraud-ingestion`.
+
+## Run the fraud detection application
+
+Docker Compose stays at the repository root and starts the app with Kafka, Redis, and PostgreSQL:
+
+```sh
+docker compose up --build -d
+docker compose ps
+```
+
+Check readiness at <http://localhost:8080/actuator/health/readiness>. Follow logs with `docker compose logs -f app`. Stop the stack with `docker compose down`.
+
+For manual event submission, database checks, IDE debugging notes, architecture, and current implementation limits, see the [fraud detection guide](fraud-detection/README.md).
+
+## Adding another project
+
+Create a new project directory with its own `pom.xml`, then add its directory name under `<modules>` in the root `pom.xml`. Keep project-specific source, Dockerfile, and documentation inside that module. Add or extend root-level Compose services only when the projects need shared local infrastructure.

@@ -1,0 +1,54 @@
+server:
+  port: ${SERVER_PORT:8080}
+spring:
+  application:
+    name: fraud-ingestion
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/fraud}
+    username: ${SPRING_DATASOURCE_USERNAME:fraud}
+    password: ${SPRING_DATASOURCE_PASSWORD:fraud}
+    hikari:
+      maximum-pool-size: 8
+  sql:
+    init:
+      mode: always
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: fraud-ingestion-v1
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    listener:
+      ack-mode: manual_immediate
+      concurrency: 1
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    readinessstate:
+      enabled: true
+    livenessstate:
+      enabled: true
+fraud:
+  topics:
+    raw: raw-transactions
+    enriched: enriched-transactions
+    dead-letter: dead-letter-transactions
+  rules:
+    high-amount-threshold: ${FRAUD_RULES_HIGH_AMOUNT_THRESHOLD:5000}
+    velocity-threshold: ${FRAUD_RULES_VELOCITY_THRESHOLD:8}
