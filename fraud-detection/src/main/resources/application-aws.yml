@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    # Supply the full JDBC URL, including the RDS endpoint and TLS options.
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+    properties:
+      security.protocol: SASL_SSL
+      sasl.mechanism: AWS_MSK_IAM
+      sasl.jaas.config: software.amazon.msk.auth.iam.IAMLoginModule required;
+      sasl.client.callback.handler.class: software.amazon.msk.auth.iam.IAMClientCallbackHandler
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      username: ${SPRING_DATA_REDIS_USERNAME:}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
+      ssl:
+        enabled: true
+fraud:
+  topics:
+    replication-factor: ${FRAUD_TOPICS_REPLICATION_FACTOR:3}

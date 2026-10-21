@@ -49,6 +49,7 @@ fraud:
     raw: raw-transactions
     enriched: enriched-transactions
     dead-letter: dead-letter-transactions
+    replication-factor: ${FRAUD_TOPICS_REPLICATION_FACTOR:1}
   rules:
     high-amount-threshold: ${FRAUD_RULES_HIGH_AMOUNT_THRESHOLD:5000}
     velocity-threshold: ${FRAUD_RULES_VELOCITY_THRESHOLD:8}

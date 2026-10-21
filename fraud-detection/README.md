@@ -113,6 +113,28 @@ The `HIGH_AMOUNT` rule matches amounts greater than or equal to `FRAUD_RULES_HIG
 
 Use environment variables for broker, database, Redis, server port, and rule thresholds. The Compose defaults are intended for local demonstration only.
 
+## AWS connection profile
+
+The `aws` Spring profile is a connection configuration for the application; it does not create AWS resources. It configures Kafka clients for MSK IAM authentication over TLS, requires RDS connection settings from environment variables, and enables TLS for Redis. Enable it with `SPRING_PROFILES_ACTIVE=aws` and provide:
+
+| Variable | Value |
+| --- | --- |
+| `SPRING_KAFKA_BOOTSTRAP_SERVERS` | MSK IAM bootstrap broker addresses, including port (typically `9098`) |
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://<RDS-endpoint>:5432/<database>?sslmode=verify-full` (configure the RDS CA trust as required by the runtime) |
+| `SPRING_DATASOURCE_USERNAME` / `SPRING_DATASOURCE_PASSWORD` | RDS application database user credentials |
+| `SPRING_DATA_REDIS_HOST` / `SPRING_DATA_REDIS_PORT` | ElastiCache primary/cluster endpoint and TLS port |
+| `SPRING_DATA_REDIS_USERNAME` / `SPRING_DATA_REDIS_PASSWORD` | ElastiCache user credentials, when authentication is enabled |
+
+The AWS profile adds the AWS MSK IAM client library. The application still needs network access to the private broker, database, and cache. Configure VPC subnets and security groups so inbound service ports accept traffic only from the application's security group. Topic creation uses three partitions and a configurable replication factor: one locally, three with the AWS profile by default. Set `FRAUD_TOPICS_REPLICATION_FACTOR` to a value supported by your broker count. The app role needs topic-creation permissions if the app is responsible for creating topics; alternatively, pre-create topics and restrict the app role to consuming and producing.
+
+### AWS credentials: local development and deployment
+
+If VS Code's AWS profile is a named profile in the shared AWS config/credentials files, verify it from a terminal with `aws sts get-caller-identity --profile <profile-name>`. If it uses IAM Identity Center (SSO), sign in with `aws sso login --profile <profile-name>` first. Set `AWS_PROFILE=<profile-name>` when running the app directly on your host with the `aws` profile. The MSK IAM client library uses AWS credentials from its provider chain; the selected VS Code account alone does not make AWS credentials available inside a Docker container.
+
+For AWS deployment, run the container as an ECS task and attach a least-privilege task role. Use that role for MSK IAM access; do not copy IAM access keys or mount your developer's `~/.aws` directory into a deployed container. Supply the database and cache credentials through ECS references to AWS Secrets Manager, and keep endpoints and non-secret values in the task configuration. Secret values injected at startup require a new deployment after rotation. Restrict Secrets Manager access to only the secrets this task needs.
+
+For local access to AWS-hosted private endpoints, your laptop must have a private network path (for example, VPN or a controlled tunnel) and the service security groups must allow it. Do not make MSK, RDS, or ElastiCache public solely for local development. See the AWS guides for [MSK IAM client configuration](https://docs.aws.amazon.com/msk/latest/developerguide/configure-clients-for-iam-access-control.html), [ECS task secrets](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/secrets-envvar-secrets-manager.html), and [ECS task roles](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-iam-roles.html).
+
 ## Reliability and recovery
 
 - Kafka auto-commit is disabled and listener acknowledgment mode is `MANUAL_IMMEDIATE`. A successful transaction requests an offset commit after validation, feature read/update, PostgreSQL persistence, and outbox insertion. Invalid or exhausted messages request a commit only after the dead-letter send completes. If dead-letter publication fails, the listener container stops without acknowledging; the record remains eligible for redelivery when the service restarts.
@@ -140,5 +162,5 @@ Integration tests require a working Docker daemon and pull Kafka, Redis, and Pos
 - There is no schema registry or compatibility negotiation; consumers must honor the explicit `schemaVersion`.
 - Redis uses a 30-day account-and-currency aggregate, with no event-time windowing or out-of-order correction.
 - Local Compose uses one Kafka broker and replication factor one; it is not production HA configuration.
-- No authentication, authorization, encryption, PII masking, rate limiting, or AWS deployment resources are included.
+- Authentication, encryption, and AWS connection settings are available through the `aws` profile, but no AWS infrastructure, ECS task definition, IAM policies, or deployment pipeline is included. PII masking and rate limiting are also not implemented.
 - Outbox delivery is at-least-once and Redis/PostgreSQL recovery requires reconciliation before production use.

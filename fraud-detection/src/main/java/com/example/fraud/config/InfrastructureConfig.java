@@ -11,8 +11,8 @@ import org.springframework.kafka.listener.CommonErrorHandler;
 @Configuration
 @EnableConfigurationProperties(FraudProperties.class)
 public class InfrastructureConfig {
-    @Bean NewTopic rawTopic(FraudProperties p) { return TopicBuilder.name(p.topics().raw()).partitions(3).replicas(1).build(); }
-    @Bean NewTopic enrichedTopic(FraudProperties p) { return TopicBuilder.name(p.topics().enriched()).partitions(3).replicas(1).build(); }
-    @Bean NewTopic deadLetterTopic(FraudProperties p) { return TopicBuilder.name(p.topics().deadLetter()).partitions(3).replicas(1).build(); }
+    @Bean NewTopic rawTopic(FraudProperties p) { return TopicBuilder.name(p.topics().raw()).partitions(3).replicas(p.topics().replicationFactor()).build(); }
+    @Bean NewTopic enrichedTopic(FraudProperties p) { return TopicBuilder.name(p.topics().enriched()).partitions(3).replicas(p.topics().replicationFactor()).build(); }
+    @Bean NewTopic deadLetterTopic(FraudProperties p) { return TopicBuilder.name(p.topics().deadLetter()).partitions(3).replicas(p.topics().replicationFactor()).build(); }
     @Bean CommonErrorHandler kafkaErrorHandler() { return new CommonContainerStoppingErrorHandler(); }
 }
