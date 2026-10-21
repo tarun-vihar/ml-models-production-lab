@@ -94,6 +94,37 @@ services:
       interval: 10s
       timeout: 3s
       retries: 12
+  fraud-graph:
+    build:
+      context: ./fraud-graph
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      MSK_AUTH_MODE: none
+      KAFKA_INPUT_TOPIC: scored-transactions
+      KAFKA_OUTPUT_TOPIC: graph-scored-transactions
+      KAFKA_DLQ_TOPIC: graph-dead-letter-transactions
+      KAFKA_CONSUMER_GROUP: fraud-graph-v1
+      GRAPH_MODE: mock
+      NEPTUNE_ENDPOINT: ${NEPTUNE_ENDPOINT:-}
+      AWS_REGION: ${AWS_REGION:-}
+      AWS_PROFILE: ${AWS_PROFILE:-}
+      NEPTUNE_AUTH_MODE: ${NEPTUNE_AUTH_MODE:-iam}
+      GRAPH_SHARED_DEVICE_ACCOUNT_THRESHOLD: 3
+      GRAPH_MEDIUM_THRESHOLD: 0.30
+      GRAPH_HIGH_THRESHOLD: 0.70
+      MAX_PROCESSING_ATTEMPTS: 3
+      METRICS_PORT: 8001
+    ports: ["8001:8001"]
+    depends_on:
+      kafka: {condition: service_healthy}
+      fraud-scoring: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://localhost:8001/health/ready', timeout=2).read()"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
 volumes:
   kafka-data:
   redis-data:

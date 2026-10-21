@@ -8,6 +8,7 @@ Parent repository for production focused machine learning projects. Each project
 | --- | --- | --- |
 | `fraud-detection/` | Spring Boot service that ingests transaction events, enriches them, applies rules, and publishes results through Kafka | [Fraud Detection README](fraud-detection/README.md) |
 | `fraud-scoring/` | Python service that scores enriched events and publishes model results to Kafka | [Fraud Scoring README](fraud-scoring/README.md) |
+| `fraud-graph/` | Python service that builds an entity graph in Amazon Neptune and publishes explainable graph risk indicators | [Fraud Graph README](fraud-graph/README.md) |
 
 ## Build the lab
 
@@ -40,6 +41,8 @@ Check readiness at <http://localhost:8080/actuator/health/readiness>. Follow log
 For manual event submission, database checks, IDE debugging notes, architecture, and current implementation limits, see the [fraud detection guide](fraud-detection/README.md).
 
 The fraud scoring service consumes `enriched-transactions` and publishes to `scored-transactions`. Local Compose uses an explicitly labeled development-only scoring baseline until a versioned trained model and its feature manifest are provided. See the [Fraud Scoring guide](fraud-scoring/README.md) for contracts and verification commands.
+
+Layer 3 consumes `scored-transactions`, persists supported entity relationships in Amazon Neptune in AWS mode, and publishes to `graph-scored-transactions`. Root Compose uses an explicit in-memory mock for local pipeline development; it does not start or emulate Neptune. See the [Fraud Graph guide](fraud-graph/README.md) for AWS networking, IAM, schema, and verification commands.
 
 ## Adding another project
 
