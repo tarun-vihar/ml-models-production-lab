@@ -1,0 +1,13 @@
+aws_region         = "us-east-1"
+name               = "fraud-lab"
+environment        = "dev"
+create_network     = true
+vpc_cidr           = "10.40.0.0/16"
+private_subnet_cidrs = ["10.40.0.0/20", "10.40.16.0/20"]
+
+# Keep the low-cost lab defaults unless you intentionally want higher availability/capacity.
+postgres_multi_az          = false
+redis_num_cache_clusters   = 1
+neptune_min_capacity       = 1.0
+neptune_max_capacity       = 2.0
+deletion_protection        = false

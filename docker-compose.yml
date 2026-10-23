@@ -78,10 +78,10 @@ services:
       KAFKA_OUTPUT_TOPIC: scored-transactions
       KAFKA_DLQ_TOPIC: scoring-dead-letter-transactions
       KAFKA_CONSUMER_GROUP: fraud-scoring-v1
-      MODEL_MODE: development-baseline
-      MODEL_VERSION: development-baseline-v1
-      MODEL_DIR: /models
-      MODEL_FEATURE_MANIFEST: /models/feature-manifest.json
+      MODEL_MODE: ${FRAUD_SCORING_MODEL_MODE:-development-baseline}
+      MODEL_VERSION: ${FRAUD_SCORING_MODEL_VERSION:-}
+      MODEL_DIR: ${FRAUD_SCORING_MODEL_DIR:-/models}
+      MODEL_FEATURE_MANIFEST: ${FRAUD_SCORING_MODEL_MANIFEST:-${FRAUD_SCORING_MODEL_DIR:-/models}/feature-manifest.json}
       METRICS_PORT: 8000
     volumes:
       - ${FRAUD_SCORING_MODEL_ARTIFACTS_DIR:-./fraud-scoring/artifacts}:/models:ro
@@ -94,6 +94,21 @@ services:
       interval: 10s
       timeout: 3s
       retries: 12
+  fraud-model-training:
+    profiles: [training]
+    build:
+      context: ./fraud-scoring/training
+      dockerfile: Dockerfile
+    environment:
+      TRAINING_DATA_PATH: ${TRAINING_DATA_PATH:-/data/transactions.csv}
+      TRAINING_LABEL_COLUMN: ${TRAINING_LABEL_COLUMN:-is_fraud}
+      TRAINING_MODEL_VERSION: ${TRAINING_MODEL_VERSION:-}
+      TRAINING_TEST_SIZE: ${TRAINING_TEST_SIZE:-0.2}
+      TRAINING_RANDOM_SEED: ${TRAINING_RANDOM_SEED:-42}
+      TRAINING_OUTPUT_DIR: /models
+    volumes:
+      - ${FRAUD_TRAINING_DATA_DIR:-./fraud-scoring/training-data}:/data:ro
+      - ${FRAUD_SCORING_MODEL_ARTIFACTS_DIR:-./fraud-scoring/artifacts}:/models
   fraud-graph:
     build:
       context: ./fraud-graph

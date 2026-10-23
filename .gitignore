@@ -9,3 +9,9 @@ __pycache__/
 .vscode/
 *.iml
 .DS_Store
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfplan
+*.plan

@@ -13,7 +13,7 @@ raw-transactions -> Layer 1 (Java) -> enriched-transactions
 
 Layer 1 uses the root Compose broker at `kafka:9092` internally and publishes UTF-8 JSON to `enriched-transactions`. Its schema version 1 includes `eventId`, `transactionId`, `eventTimestamp`, `accountId`, numeric `amount`, `currency`, `merchantId`, `deviceId`, `paymentInstrumentId`, `priorTransactionCount`, `priorAmountTotal`, `suspicious`, `matchedRules`, and `enrichedAt`. Layer 1 writes the original enriched transaction, audit data, and outbox to PostgreSQL, and uses Redis for online account/currency aggregates. Layer 2 reads only the Kafka event.
 
-The candidate numeric feature mapping is in [artifacts/feature-manifest.example.json](artifacts/feature-manifest.example.json). No training data, trained model, or training feature contract was present. The mapping therefore remains provisional until the training pipeline adopts and versions it.
+The candidate numeric feature mapping is in [artifacts/feature-manifest.example.json](artifacts/feature-manifest.example.json). The independent [training pipeline](training/README.md) now trains this exact four-feature contract from a labeled CSV and writes a versioned model and manifest. No labeled training data is included, so this repository still has no trained fraud model.
 
 ## Run with Docker Compose
 
@@ -51,7 +51,7 @@ pip install -r requirements.txt
 KAFKA_BOOTSTRAP_SERVERS=localhost:9092 MODEL_MODE=development-baseline python -m app.main
 ```
 
-For production inference, set `MODEL_MODE=xgboost`, `MODEL_DIR` to a mounted/versioned directory containing `model.json`, and `MODEL_FEATURE_MANIFEST` to its manifest. Startup fails if model or manifest is missing or inconsistent. See [artifact notes](artifacts/README.md).
+For XGBoost inference, set `FRAUD_SCORING_MODEL_MODE=xgboost` and mount the generated model artifacts at `MODEL_DIR` (Compose uses `/models`). Startup fails if model or manifest is missing or inconsistent. See [artifact notes](artifacts/README.md) and the [training instructions](training/README.md).
 
 ## Configuration
 
@@ -80,7 +80,7 @@ For production inference, set `MODEL_MODE=xgboost`, `MODEL_DIR` to a mounted/ver
 
 The XGBoost artifact is loaded once at process startup and reused. The manifest pins `modelVersion`, `featureSchemaVersion`, feature names and order, source fields, float type, and currently supported identity preprocessing. The loaded model's feature names/order are checked against the manifest. The present event-to-feature adapter supports the four Layer 1 numeric/bool inputs listed in the example; any different training features or transforms require a matching, tested adapter change. Do not train inside the consumer.
 
-The development baseline is a transparent rule heuristic to verify Kafka wiring and output shape. Its probability is not calibrated, not a learned model prediction, and must not be used for operational fraud decisions. No model accuracy is claimed.
+The development baseline is a transparent rule heuristic to verify Kafka wiring and output shape. Its probability is not calibrated, not a learned model prediction, and must not be used for operational fraud decisions. Training holdout metrics are written with each training run; they are only an initial check and do not establish production performance or calibration.
 
 ## Output event contract
 

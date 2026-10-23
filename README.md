@@ -10,6 +10,8 @@ Parent repository for production focused machine learning projects. Each project
 | `fraud-scoring/` | Python service that scores enriched events and publishes model results to Kafka | [Fraud Scoring README](fraud-scoring/README.md) |
 | `fraud-graph/` | Python service that builds an entity graph in Amazon Neptune and publishes explainable graph risk indicators | [Fraud Graph README](fraud-graph/README.md) |
 
+AWS infrastructure for MSK, RDS PostgreSQL, ElastiCache Redis, Neptune, private networking rules, Secrets Manager references, and ECS task roles is defined in [infra/aws](infra/aws/README.md). The Terraform template uses an existing VPC and private subnets; it does not deploy automatically.
+
 ## Build the lab
 
 The root Maven project is an aggregator. It builds all modules:
@@ -41,6 +43,8 @@ Check readiness at <http://localhost:8080/actuator/health/readiness>. Follow log
 For manual event submission, database checks, IDE debugging notes, architecture, and current implementation limits, see the [fraud detection guide](fraud-detection/README.md).
 
 The fraud scoring service consumes `enriched-transactions` and publishes to `scored-transactions`. Local Compose uses an explicitly labeled development-only scoring baseline until a versioned trained model and its feature manifest are provided. See the [Fraud Scoring guide](fraud-scoring/README.md) for contracts and verification commands.
+
+Fraud model training is a separate batch image under `fraud-scoring/training/`. It accepts a configurable labeled CSV and writes a versioned XGBoost model, feature manifest, and holdout metrics. No labeled data is bundled. See [training instructions](fraud-scoring/training/README.md) and the [training CSV contract](fraud-scoring/training-data/README.md).
 
 Layer 3 consumes `scored-transactions`, persists supported entity relationships in Amazon Neptune in AWS mode, and publishes to `graph-scored-transactions`. Root Compose uses an explicit in-memory mock for local pipeline development; it does not start or emulate Neptune. See the [Fraud Graph guide](fraud-graph/README.md) for AWS networking, IAM, schema, and verification commands.
 
